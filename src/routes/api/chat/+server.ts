@@ -8,17 +8,19 @@ const openai = new OpenAI({
     apiKey: 'ollama', // required but unused
   })
 
-//export type MessageBody = { chats: { role: 'user' | 'assistant'; content: string }[]}
+export type MessageBody = { chats: { role: 'user' | 'assistant'; content: string }[]}
 
 export const POST = async ({ request }) => {
-    //const body: MessageBody = await request.json()
+    const body: MessageBody = await request.json()
+
+    console.log(body)
   
   const completion = await openai.chat.completions.create({
     model: 'llama3.2',
     messages: [
         { role: 'system', content: 'You are a helpful assistant.' },
         { role: 'assistant', content: 'What can I help you with today?' },
-        { role: 'user', content: 'What can you tell me about Svelte?' }
+        ...body.chats
     ],
   })
   
