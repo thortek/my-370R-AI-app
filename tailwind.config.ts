@@ -17,7 +17,7 @@ export default {
 	plugins: [typography, forms,
 		skeleton({
             // NOTE: each theme included will increase the size of your CSS bundle
-            themes: [ themes.cerberus, themes.rose ]
+            themes: [ themes.cerberus, themes.rose, themes.catppuccin, themes.concord, themes.legacy, themes.wintry ]
         })
 	]
 } satisfies Config;
