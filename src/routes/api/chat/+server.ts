@@ -4,27 +4,49 @@ import OpenAI from 'openai';
 //const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY})
 
 const openai = new OpenAI({
-    baseURL: 'http://localhost:11434/v1',
-    apiKey: 'ollama', // required but unused
-  })
+	baseURL: 'http://localhost:11434/v1',
+	apiKey: 'ollama' // required but unused
+});
 
-export type MessageBody = { chats: { role: 'user' | 'assistant'; content: string }[]}
+export type MessageBody = { chats: { role: 'user' | 'assistant'; content: string }[] };
 
 export const POST = async ({ request }) => {
-    const body: MessageBody = await request.json()
+	try {
+		const body: MessageBody = await request.json();
 
-    console.log(body)
-  
-  const completion = await openai.chat.completions.create({
-    model: 'llama3.2',
-    messages: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-        { role: 'assistant', content: 'What can I help you with today?' },
+		console.log(body);
+
+		const stream = await openai.chat.completions.create({
+			model: 'llama3.2',
+			messages: [
+        { role: 'developer', content: 'You are a helpful assistant.' },
         ...body.chats
-    ],
-  })
-  
-  console.log(completion.choices[0].message.content)
+      ],
+			stream: true
+		});
 
-  return new Response(JSON.stringify({ message: completion.choices[0].message.content }))
-}
+		// Create a new ReadableStream for the response
+		const readableStream = new ReadableStream({
+			async start(controller) {
+				for await (const chunk of stream) {
+					const text = chunk.choices[0]?.delta?.content || '';
+					controller.enqueue(text);
+				}
+				controller.close();
+			}
+		});
+
+		//console.log(completion.choices[0].message.content)
+
+		/*   return new Response(JSON.stringify({ message: completion.choices[0].message.content })) */
+
+		return new Response(readableStream, {
+			status: 200,
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+	} catch (error) {
+		return new Response('Something went wrong', { status: 500 });
+	}
+};
