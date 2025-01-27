@@ -17,7 +17,8 @@ export const POST = async ({ request }) => {
 		console.log(body);
 
 		const stream = await openai.chat.completions.create({
-			model: 'llama3.2',
+			//model: 'llama3.2',
+			model: 'deepseek-r1:8b',
 			messages: [
         { role: 'developer', content: 'You are a helpful assistant.' },
         ...body.chats
