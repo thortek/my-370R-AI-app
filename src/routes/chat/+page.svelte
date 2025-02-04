@@ -5,12 +5,21 @@
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
 	import ChatAppBar from '$lib/components/ChatAppBar.svelte';
+	import FileUploadAside from '$lib/components/FileUploadAside.svelte';
+
+	/* 	import hljs from 'highlight.js';
+	import javascript from 'highlight.js/lib/languages/javascript';
+	import typescript from 'highlight.js/lib/languages/typescript';
+	import css from 'highlight.js/lib/languages/css';
+	hljs.registerLanguage('javascript', javascript);
+	hljs.registerLanguage('typescript', typescript);
+	hljs.registerLanguage('css', css) */
 
 	//type MessageBody = { chats: { role: 'user' | 'assistant'; content: string }[] };
 
-	let systemPrompt = $state('')
-	let examplePrompt = $state('')
-	let deepSeek = $state(false)
+	let systemPrompt = $state('');
+	let examplePrompt = $state('');
+	let deepSeek = $state(false);
 
 	let chatHistory = $state(
 		typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('chatHistory') || '[]') : []
@@ -27,10 +36,10 @@
 	let responseText = $state('');
 
 	// Add this helper function
-function stripThinkTags(text: string): string {
-    const thinkRegex = /<think>[\s\S]*?<\/think>/g;
-    return text.replace(thinkRegex, '');
-}
+	function stripThinkTags(text: string): string {
+		const thinkRegex = /<think>[\s\S]*?<\/think>/g;
+		return text.replace(thinkRegex, '');
+	}
 
 	$effect(() => {
 		if (response.text !== '') {
@@ -68,7 +77,7 @@ function stripThinkTags(text: string): string {
 					body: JSON.stringify({
 						chats: chatHistory,
 						systemPrompt,
-						deepSeek,
+						deepSeek
 					})
 				})
 			);
@@ -77,8 +86,8 @@ function stripThinkTags(text: string): string {
 
 			const answerText = (await answer) as string;
 
-			const parsedAnswer = await marked.parse(answerText)
-			const cleanedAnswer= stripThinkTags(parsedAnswer);
+			const parsedAnswer = await marked.parse(answerText);
+			const cleanedAnswer = stripThinkTags(parsedAnswer);
 			const purifiedText = DOMPurify.sanitize(cleanedAnswer)
 				.replace(/<script>/g, '&lt;script&gt;')
 				.replace(/<\/script>/g, '&lt;/script&gt;');
@@ -88,7 +97,6 @@ function stripThinkTags(text: string): string {
 			chatHistory = [...chatHistory, { role: 'assistant', content: purifiedText }];
 
 			console.log(answerText);
-
 		} catch (error) {
 			console.error(error);
 		}
@@ -101,75 +109,85 @@ function stripThinkTags(text: string): string {
 
 <main class="flex min-h-screen w-screen flex-col items-center bg-primary-50-950">
 	<!-- The app bar for this page -->
-	<ChatAppBar bind:selectedSystemPrompt={systemPrompt}
-	bind:selectedExamplePrompt={examplePrompt}
-	bind:deepSeek/>
+	<ChatAppBar
+		bind:selectedSystemPrompt={systemPrompt}
+		bind:selectedExamplePrompt={examplePrompt}
+		bind:deepSeek
+	/>
 
-	<form onsubmit={handleSubmit} class="flex w-full max-w-7xl flex-col p-2 m-4 border-2 rounded-md border-primary-500">
-		<div class="space-y-4">
-			<div class="flex space-x-2">
-				<Avatar src="/img-tutor-girl.png" name="Tutor girl image" />
-				<div class="assistant-chat">Hello! How can I help you?</div>
-			</div>
-			<!-- Need to display each chat item here -->
-			{#each chatHistory as chat, i}
-				{#if chat.role === 'user'}
-					<div class="ml-auto flex justify-end">
-						<div>
-							<Avatar src="/PikaThorAnime.png" name="User image" />
-						</div>
-						<div class="user-chat">
-							{chat.content}
-						</div>
-					</div>
-					<!-- this else handles the assistant role chat display -->
-				{:else}
-					<div class="mr-auto flex">
-						<div>
-							<Avatar src="/img-tutor-girl.png" name="Tutor girl image" />
-						</div>
-						<div class="assistant-chat">
-							{@html chat.content}
-						</div>
-					</div>
-				{/if}
-			{/each}
-
-			{#if response.loading}
-				{#await new Promise((res) => setTimeout(res, 400)) then _}
-					<div class="flex">
-						<div class="flex space-x-2">
-							<Avatar name="tutor girl image" src={'/img-tutor-girl.png'} />
-							<div class="assistant-chat">
-								{#if response.text === ''}
-									<TypingIndicator />
-								{:else}
-									{@html responseText}
-								{/if}
+	<div class="flex w-full">
+		<FileUploadAside />
+		<form
+			onsubmit={handleSubmit}
+			class="m-4 flex w-full max-w-7xl flex-col rounded-md border-2 border-primary-500 p-2"
+		>
+			<div class="space-y-4">
+				<div class="flex space-x-2">
+					<Avatar src="/img-tutor-girl.png" name="Tutor girl image" />
+					<div class="assistant-chat">Hello! How can I help you?</div>
+				</div>
+				<!-- Need to display each chat item here -->
+				{#each chatHistory as chat, i}
+					{#if chat.role === 'user'}
+						<div class="ml-auto flex justify-end">
+							<div>
+								<Avatar src="/PikaThorAnime.png" name="User image" />
+							</div>
+							<div class="user-chat">
+								{chat.content}
 							</div>
 						</div>
-					</div>
-				{/await}
-			{/if}
-			<div class="space-y-4">
-				<hr />
-				<div class="flex space-x-4">
-					<textarea
-						class="textarea"
-						required
-						placeholder="Type your message..."
-						name="message"
-						rows="3"
-						bind:value={examplePrompt}
-					></textarea>
-					<div class="flex flex-col justify-between">
-						<button type="submit" class="btn preset-filled-primary-500">Send</button>
-						<button type="button" class="btn preset-filled-secondary-500" onclick={deleteAllChats}>Clear Chats</button>
+						<!-- this else handles the assistant role chat display -->
+					{:else}
+						<div class="mr-auto flex">
+							<div>
+								<Avatar src="/img-tutor-girl.png" name="Tutor girl image" />
+							</div>
+							<div class="assistant-chat">
+								{@html chat.content}
+							</div>
+						</div>
+					{/if}
+				{/each}
+
+				{#if response.loading}
+					{#await new Promise((res) => setTimeout(res, 400)) then _}
+						<div class="flex">
+							<div class="flex space-x-2">
+								<Avatar name="tutor girl image" src={'/img-tutor-girl.png'} />
+								<div class="assistant-chat">
+									{#if response.text === ''}
+										<TypingIndicator />
+									{:else}
+										{@html responseText}
+									{/if}
+								</div>
+							</div>
+						</div>
+					{/await}
+				{/if}
+				<div class="space-y-4">
+					<hr />
+					<div class="flex space-x-4">
+						<textarea
+							class="textarea"
+							required
+							placeholder="Type your message..."
+							name="message"
+							rows="3"
+							bind:value={examplePrompt}
+						></textarea>
+						<div class="flex flex-col justify-between">
+							<button type="submit" class="btn preset-filled-primary-500">Send</button>
+							<button type="button" class="btn preset-filled-secondary-500" onclick={deleteAllChats}
+								>Clear Chats</button
+							>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-	</form>
+		</form>
+	</div>
 </main>
 
 <style lang="postcss">
@@ -183,32 +201,38 @@ function stripThinkTags(text: string): string {
 
 	.assistant-chat :global {
 		ol {
-			@apply list-decimal list-inside ml-4;
+			@apply ml-4 list-inside list-decimal;
 		}
 		ul {
-            @apply list-disc list-inside ml-4;
-        }
-		 /* Code blocks */
-		 pre {
-            @apply bg-surface-700 p-4 rounded-lg my-4 overflow-x-auto;
-        }
-        code {
-            @apply font-mono bg-surface-100 px-1 py-0.5 rounded;
-        }
-        
-        /* Headers */
-        h1 { @apply text-2xl font-bold mb-4; }
-        h2 { @apply text-xl font-bold mb-3; }
-        h3 { @apply text-lg font-bold mb-2; }
-        
-        /* Links */
-        a {
-            @apply text-primary-500 hover:underline;
-        }
-        
-        /* Blockquotes */
-        blockquote {
-            @apply border-l-4 border-surface-500 pl-4 italic;
-        }
+			@apply ml-4 list-inside list-disc;
+		}
+		/* Code blocks */
+		pre {
+			@apply my-4 overflow-x-auto rounded-lg bg-surface-700 p-4;
+		}
+		code {
+			@apply rounded bg-surface-100 px-1 py-0.5 font-mono;
+		}
+
+		/* Headers */
+		h1 {
+			@apply mb-4 text-2xl font-bold;
+		}
+		h2 {
+			@apply mb-3 text-xl font-bold;
+		}
+		h3 {
+			@apply mb-2 text-lg font-bold;
+		}
+
+		/* Links */
+		a {
+			@apply text-primary-500 hover:underline;
+		}
+
+		/* Blockquotes */
+		blockquote {
+			@apply border-l-4 border-surface-500 pl-4 italic;
+		}
 	}
 </style>
