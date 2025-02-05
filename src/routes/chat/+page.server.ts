@@ -39,9 +39,18 @@ export const actions = {
                 await fsPromises.unlink(path.join(uploadPath, file))
             }
 
-            await pipeline(readableStream, fs.createWriteStream(uploadPath))
+            const timeStampSuffix = Date.now();
+			const fileNameOnly = uploadedFile.name.replace('.pdf', '');
+			const uploadedFilePath = path.join(uploadPath, `${fileNameOnly}-${timeStampSuffix}.pdf`);
+
+			await pipeline(readableStream, fs.createWriteStream(uploadedFilePath));
 
             console.log('File uploaded')
+
+            return {
+				status: 200,
+				success: 'File uploaded and processed successfully.',
+			};
         }
         catch (e) {
             return {
@@ -51,9 +60,6 @@ export const actions = {
                 }
             }
         }
-
-
-        return {status: 'ok'};
     }
 
 
