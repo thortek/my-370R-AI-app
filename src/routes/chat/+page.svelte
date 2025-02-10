@@ -2,20 +2,29 @@
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 	import TypingIndicator from '$lib/utils/typingIndicator.svelte';
 	import { readableStreamStore } from '$lib/readableStreamStore.svelte';
-	import { marked } from 'marked';
+	import { Marked } from 'marked';
+	import { markedHighlight } from 'marked-highlight';
 	import DOMPurify from 'dompurify';
 	import ChatAppBar from '$lib/components/ChatAppBar.svelte';
 	import FileUploadAside from '$lib/components/FileUploadAside.svelte';
 
-	/* 	import hljs from 'highlight.js';
+	import hljs from 'highlight.js';
 	import javascript from 'highlight.js/lib/languages/javascript';
 	import typescript from 'highlight.js/lib/languages/typescript';
 	import css from 'highlight.js/lib/languages/css';
 	hljs.registerLanguage('javascript', javascript);
 	hljs.registerLanguage('typescript', typescript);
-	hljs.registerLanguage('css', css) */
+	hljs.registerLanguage('css', css)
 
-	//type MessageBody = { chats: { role: 'user' | 'assistant'; content: string }[] };
+	const marked = new Marked(
+		markedHighlight({
+			langPrefix: 'hljs language-',
+			highlight: (code, lang) => {
+				const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+				return hljs.highlight(code, { language }).value;
+			}
+		})
+	)
 
 	let systemPrompt = $state('');
 	let examplePrompt = $state('');
@@ -45,8 +54,8 @@
 		if (response.text !== '') {
 			(async () => {
 				// Strip <think> tags from the response text
-				const cleanedText = stripThinkTags(response.text);
-				const parsedText = await marked.parse(cleanedText);
+				//const cleanedText = stripThinkTags(response.text);
+				const parsedText = await marked.parse(response.text);
 				responseText = DOMPurify.sanitize(parsedText)
 					.replace(/<script>/g, '&lt;script&gt;')
 					.replace(/<\/script>/g, '&lt;/script&gt;');
@@ -87,8 +96,8 @@
 			const answerText = (await answer) as string;
 
 			const parsedAnswer = await marked.parse(answerText);
-			const cleanedAnswer = stripThinkTags(parsedAnswer);
-			const purifiedText = DOMPurify.sanitize(cleanedAnswer)
+			//const cleanedAnswer = stripThinkTags(parsedAnswer);
+			const purifiedText = DOMPurify.sanitize(parsedAnswer)
 				.replace(/<script>/g, '&lt;script&gt;')
 				.replace(/<\/script>/g, '&lt;/script&gt;');
 
@@ -119,7 +128,7 @@
 		<FileUploadAside />
 		<form
 			onsubmit={handleSubmit}
-			class="m-4 flex w-full max-w-7xl flex-col rounded-md border-2 border-primary-500 p-2"
+			class="m-4 flex flex-col rounded-md border-2 border-primary-500 p-2"
 		>
 			<div class="space-y-4">
 				<div class="flex space-x-2">
@@ -207,13 +216,13 @@
 			@apply ml-4 list-inside list-disc;
 		}
 		/* Code blocks */
-		pre {
+	/* 	pre {
 			@apply my-4 overflow-x-auto rounded-lg bg-surface-700 p-4;
 		}
 		code {
 			@apply rounded bg-surface-100 px-1 py-0.5 font-mono;
 		}
-
+ */
 		/* Headers */
 		h1 {
 			@apply mb-4 text-2xl font-bold;
