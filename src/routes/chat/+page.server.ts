@@ -5,6 +5,11 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { pipeline } from 'stream/promises'
 import fs from 'fs'
+import { WebPDFLoader } from '@langchain/community/document_loaders/web/pdf';
+
+const OPTIMAL_CHUNK_SIZE = 400  // tokens
+const CHUNK_OVERLAP = 50
+const CHARS_PER_TOKEN = 4 // Average for Llama-friendly models (emprically determined)
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -47,9 +52,12 @@ export const actions = {
 
             console.log('File uploaded')
 
+            const addedFileData = await createFileDataObject(uploadedFilePath)
+
             return {
 				status: 200,
 				success: 'File uploaded and processed successfully.',
+                data: addedFileData
 			};
         }
         catch (e) {
@@ -64,3 +72,39 @@ export const actions = {
 
 
 } as Actions
+
+async function createFileDataObject(uploadedFilePath: string) {
+    const fileData = await fsPromises.readFile(uploadedFilePath)
+    const fileBlob = new Blob([fileData])
+
+    const loader = new WebPDFLoader(fileBlob, {
+        splitPages: true,
+    })
+
+    const docs = await loader.load()
+    const chunks = []
+
+    for (const doc of docs) {
+        const pageContent = doc.pageContent
+
+        // Calculate chunks with overlapping content
+        let startPos = 0
+        while (startPos < pageContent.length) {
+            const chunk = pageContent.slice(startPos, startPos + (OPTIMAL_CHUNK_SIZE * CHARS_PER_TOKEN))
+
+            chunks.push({
+                chunk_text: chunk,
+                file_name: path.basename(uploadedFilePath),
+                metadata: {
+                    totalPages: docs.length,
+                    pageNumberLocation: doc.metadata?.loc?.pageNumber,
+                    chunkIndex: chunks.length,
+                }
+            })
+
+            startPos += ((OPTIMAL_CHUNK_SIZE - CHUNK_OVERLAP) * CHARS_PER_TOKEN)
+        }
+        console.log('Chunks: ', chunks)
+    }
+    return { success: true }
+}
