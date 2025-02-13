@@ -37,7 +37,7 @@ const embeddedFileSchema = {
         {
             name: 'metadata',
             dataType: dataType.OBJECT,
-            properties: [
+            nestedProperties: [
                 {
                     name: 'totalPages',
                     dataType: dataType.INT

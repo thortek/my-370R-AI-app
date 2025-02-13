@@ -6,14 +6,31 @@ import { fileURLToPath } from 'url'
 import { pipeline } from 'stream/promises'
 import fs from 'fs'
 import { WebPDFLoader } from '@langchain/community/document_loaders/web/pdf';
+import type { WeaviateClient } from 'weaviate-client';
+import weaviate from 'weaviate-client';
 
 const OPTIMAL_CHUNK_SIZE = 400  // tokens
 const CHUNK_OVERLAP = 50
 const CHARS_PER_TOKEN = 4 // Average for Llama-friendly models (emprically determined)
 
+let client: WeaviateClient
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const uploadPath = process.env.NODE_ENV === 'production' ? '/uploads' : path.resolve(__dirname, '../../uploads')
+
+async function connectToWeaviate(): Promise<WeaviateClient> {
+	const clientPromise = weaviate.connectToCustom({
+		httpHost: 'localhost',
+		httpPort: 8084,
+		grpcHost: 'localhost',
+		grpcPort: 50054,
+		headers: {
+			'X-OpenAI-Api-Key': process.env.OPENAI_API_KEY as string
+		}
+	});
+	return clientPromise;
+}
 
 export const actions = {
     uploadFile: async ( {request} ) => {
@@ -106,5 +123,15 @@ async function createFileDataObject(uploadedFilePath: string) {
         }
         console.log('Chunks: ', chunks)
     }
+
+    await importFileChunks(chunks)
+    
     return { success: true }
+}
+
+async function importFileChunks(chunks: any[]) {
+    client = await connectToWeaviate()
+    const fileChunkCollection = client.collections.get('Chunks')
+    const result = await fileChunkCollection.data.insertMany(chunks)
+    console.log('Inserted chunks: ', result)
 }
