@@ -1,80 +1,94 @@
 <script lang="ts">
-	import { Avatar } from '@skeletonlabs/skeleton-svelte';
-	import TypingIndicator from '$lib/utils/typingIndicator.svelte';
-	import { readableStreamStore } from '$lib/readableStreamStore.svelte';
-	import { Marked } from 'marked';
-	import { markedHighlight } from 'marked-highlight';
-	import DOMPurify from 'dompurify';
-	import ChatAppBar from '$lib/components/ChatAppBar.svelte';
-	import FileUploadAside from '$lib/components/FileUploadAside.svelte';
+	import { Avatar } from '@skeletonlabs/skeleton-svelte'
+	import TypingIndicator from '$lib/utils/typingIndicator.svelte'
+	import { readableStreamStore } from '$lib/readableStreamStore.svelte'
+	import { Marked } from 'marked'
+	import { markedHighlight } from 'marked-highlight'
+	import DOMPurify from 'dompurify'
+	import ChatAppBar from '$lib/components/ChatAppBar.svelte'
+	import FileUploadAside from '$lib/components/FileUploadAside.svelte'
+	import { CircleX } from 'lucide-svelte'
 
-	import hljs from 'highlight.js';
-	import javascript from 'highlight.js/lib/languages/javascript';
-	import typescript from 'highlight.js/lib/languages/typescript';
-	import css from 'highlight.js/lib/languages/css';
-	hljs.registerLanguage('javascript', javascript);
-	hljs.registerLanguage('typescript', typescript);
+	import hljs from 'highlight.js'
+	import javascript from 'highlight.js/lib/languages/javascript'
+	import typescript from 'highlight.js/lib/languages/typescript'
+	import css from 'highlight.js/lib/languages/css'
+	hljs.registerLanguage('javascript', javascript)
+	hljs.registerLanguage('typescript', typescript)
 	hljs.registerLanguage('css', css)
 
 	const marked = new Marked(
 		markedHighlight({
 			langPrefix: 'hljs language-',
 			highlight: (code, lang) => {
-				const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-				return hljs.highlight(code, { language }).value;
+				const language = hljs.getLanguage(lang) ? lang : 'plaintext'
+				return hljs.highlight(code, { language }).value
 			}
 		})
 	)
 
-	let systemPrompt = $state('');
-	let examplePrompt = $state('');
-	let deepSeek = $state(false);
+	interface PageData {
+		fileNames?: string[];
+	}
+	
+	let { data } = $props<{ data: PageData }>()
+	
+	let systemPrompt = $state('')
+	let examplePrompt = $state('')
+	let deepSeek = $state(false)
+	let fileNames = $state([] as string[])
 
 	let chatHistory = $state(
 		typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('chatHistory') || '[]') : []
-	);
+	)
+
+	$effect(() => {
+		if (data?.fileNames) {
+			fileNames = [...data.fileNames]
+		}
+	})
 
 	$effect(() => {
 		if (typeof window !== 'undefined') {
-			localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+			localStorage.setItem('chatHistory', JSON.stringify(chatHistory))
 		}
-	});
+	})
 
-	const response = readableStreamStore();
+	const response = readableStreamStore()
 
-	let responseText = $state('');
+	let responseText = $state('')
 
 	// Add this helper function
 	function stripThinkTags(text: string): string {
-		const thinkRegex = /<think>[\s\S]*?<\/think>/g;
-		return text.replace(thinkRegex, '');
+		const thinkRegex = /<think>[\s\S]*?<\/think>/g
+		return text.replace(thinkRegex, '')
 	}
 
 	$effect(() => {
 		if (response.text !== '') {
-			(async () => {
+			;(async () => {
 				// Strip <think> tags from the response text
 				//const cleanedText = stripThinkTags(response.text);
-				const parsedText = await marked.parse(response.text);
+				const parsedText = await marked.parse(response.text)
 				responseText = DOMPurify.sanitize(parsedText)
 					.replace(/<script>/g, '&lt;script&gt;')
-					.replace(/<\/script>/g, '&lt;/script&gt;');
-			})();
+					.replace(/<\/script>/g, '&lt;/script&gt;')
+			})()
 		}
-	});
+	})
 
 	async function handleSubmit(this: HTMLFormElement, event: Event) {
-		event?.preventDefault();
-		if (response.loading) return; // prevent request while waiting for response
+		event?.preventDefault()
+		if (response.loading) return // prevent request while waiting for response
 
-		const formData: FormData = new FormData(this);
-		const message = formData.get('message');
+		const formData: FormData = new FormData(this)
+		const message = formData.get('message')
 
 		if (!message) {
-			return;
+			return
 		}
 
-		chatHistory = [...chatHistory, { role: 'user', content: message as string }];
+		chatHistory = [...chatHistory, { role: 'user', content: message as string }]
 
 		try {
 			const answer = response.request(
@@ -86,34 +100,41 @@
 					body: JSON.stringify({
 						chats: chatHistory,
 						systemPrompt,
-						deepSeek
+						deepSeek,
+						fileNames
 					})
 				})
-			);
+			)
 
-			this.reset(); // clear the form
+			this.reset() // clear the form
 
-			const answerText = (await answer) as string;
+			const answerText = (await answer) as string
 
-			const parsedAnswer = await marked.parse(answerText);
+			const parsedAnswer = await marked.parse(answerText)
 			//const cleanedAnswer = stripThinkTags(parsedAnswer);
 			const purifiedText = DOMPurify.sanitize(parsedAnswer)
 				.replace(/<script>/g, '&lt;script&gt;')
-				.replace(/<\/script>/g, '&lt;/script&gt;');
+				.replace(/<\/script>/g, '&lt;/script&gt;')
 
 			// put the answer into the chat history with role 'assistant'
 
-			chatHistory = [...chatHistory, { role: 'assistant', content: purifiedText }];
+			chatHistory = [...chatHistory, { role: 'assistant', content: purifiedText }]
 
-			console.log(answerText);
+			console.log(answerText)
 		} catch (error) {
-			console.error(error);
+			console.error(error)
 		}
 	}
 
 	function deleteAllChats() {
-		chatHistory = [];
+		chatHistory = []
 	}
+
+	function deleteFileName(fileName: string) {
+		// Update the local state instead of the prop
+		fileNames = fileNames.filter((name) => name !== fileName)
+	}
+
 </script>
 
 <main class="flex min-h-screen w-screen flex-col items-center bg-primary-50-950">
@@ -195,6 +216,26 @@
 					</div>
 				</div>
 			</div>
+			<div class="flex w-full flex-col items-center">
+				<p class="text-center text-sm text-surface-500">
+					You can also upload a file for additional context to chat with me. I will do my best to
+					help you.
+				</p>
+				{#if fileNames.length > 0}
+					<div class="flex items-center gap-4">
+						{#each fileNames as fileName}
+							<div class="flex items-center gap-2">
+								<button
+									type="button"
+									class="btn preset-filled-primary-500">
+									<span>{fileName}</span>
+									<CircleX onclick={() => deleteFileName(fileName)} />
+								</button>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			</div>
 		</form>
 	</div>
 </main>
@@ -216,7 +257,7 @@
 			@apply ml-4 list-inside list-disc;
 		}
 		/* Code blocks */
-	/* 	pre {
+		/* 	pre {
 			@apply my-4 overflow-x-auto rounded-lg bg-surface-700 p-4;
 		}
 		code {
