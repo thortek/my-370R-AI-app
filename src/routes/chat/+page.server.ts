@@ -148,7 +148,7 @@ async function createFileDataObject(uploadedFilePath: string) {
 
             startPos += ((OPTIMAL_CHUNK_SIZE - CHUNK_OVERLAP) * CHARS_PER_TOKEN)
         }
-        console.log('Chunks: ', chunks)
+        //console.log('Chunks: ', chunks)
     }
 
     await importFileChunks(chunks)
@@ -184,6 +184,32 @@ async function importFileChunks(chunks: any[]) {
 
 	console.log(`Chunk log written to: ${logPath}`)
 
-    const result = await fileChunkCollection.data.insertMany(chunks)
-    console.log('Inserted chunks: ', result)
+    //const result = await fileChunkCollection.data.insertMany(chunks)
+    
+    // Break chunks into smaller batches
+    const BATCH_SIZE = 100
+    const batches= []
+
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+        batches.push(chunks.slice(i, i + BATCH_SIZE))
+    }
+
+    console.log(`Inserting ${batches.length} batches of ${BATCH_SIZE} chunks each`)
+
+    let totalInserted = 0
+    for (const [index, batch] of batches.entries()) {
+        try {
+            await fileChunkCollection.data.insertMany(batch)
+            totalInserted += batch.length
+            console.log(
+                `Progress: ${totalInserted} / ${chunks.length} chunks inserted (${Math.round(
+                    (totalInserted / chunks.length) * 100)}%)`
+            )
+
+        } catch (e) {
+            console.error(`Failed at chunk ${totalInserted + 1}: `, e)
+            throw e
+        }
+    }
+
 }

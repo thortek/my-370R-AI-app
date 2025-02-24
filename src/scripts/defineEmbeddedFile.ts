@@ -64,13 +64,27 @@ async function addCollection() {
     }
 }
 
+async function getCollectionCount(collectionName: string) {
+    try {
+        const collection: Collection = client.collections.get(collectionName)
+        let count = 0
+        for await (const _ of collection.iterator()) {
+            count++
+        }
+        console.log(`The ${collectionName} collection has ${count} items`)
+    } catch (err) {
+        console.error(`Failed to get the ${collectionName} collection`)
+    }
+}
+
 async function run() {
     const startTime: Date = new Date()
     console.log('Starting user embedded file schema creation...')
 
-    client = await connectToWeaviate()
-    await addCollection()
+   client = await connectToWeaviate()
+    //await addCollection()
     //await client.collections.delete('Chunks')
+    await getCollectionCount('Chunks')
 
     const endTime: Date = new Date()
     const elapsedTime: number = endTime.getTime() - startTime.getTime();
