@@ -97,12 +97,20 @@ export const POST = async ({ request }) => {
 				const result = await chunksCollection.generate.nearText(
 					currentQuery,
 					{ groupedTask: generatePrompt },
-					{ limit: 3 }
+					{ limit: 3 },
 				)
 
-				//console.log(result.generated)
+/* 				const result = await chunksCollection.query.nearText('DWDD 3780 Rich Internet Applications', {
+					limit: 20,
+					returnMetadata: ['distance']
+				  })
 
-				if (!result.generated) {
+				  result.objects.forEach(item => {
+					console.log(JSON.stringify(item.properties, null, 2))
+					console.log(item.metadata?.distance)
+				  }) */
+
+ 				if (!result.generated) {
 					return new Response(
 						"I couldn't find specific information matching your query. Could you rephrase or be more specific?",
 						{ status: 200 }

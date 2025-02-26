@@ -36,6 +36,13 @@ async function connectToWeaviate(): Promise<WeaviateClient> {
 export async function load() {
 	client = await connectToWeaviate()
 
+    if (!client) {
+        return {
+            status: 500,
+            error: 'Failed to connect to Weaviate'
+        }
+    }
+
 	const fileChunkCollection = client.collections.get<ChunkObject>('Chunks')
 	if (fileChunkCollection) {
 		const uniqueFileNames = new Set<string>()
