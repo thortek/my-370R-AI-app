@@ -222,7 +222,7 @@
 					help you.
 				</p>
 				{#if fileNames.length > 0}
-					<div class="flex items-center gap-4">
+					<div class="flex items-center gap-4 flex-wrap">
 						{#each fileNames as fileName}
 							<div class="flex items-center gap-2">
 								<button
