@@ -48,6 +48,7 @@
 		"marked-highlight": "^2.2.1",
 		"openai": "^4.81.0",
 		"pdf-parse": "^1.1.1",
+		"sharp": "^0.33.5",
 		"weaviate-client": "^3.3.2"
 	}
 }
