@@ -39,7 +39,6 @@ function bufferToBase64(buffer: Buffer): string {
 async function addImageToCollection(title: string, imageBase64: string, imageId: string) {
     try {
       await client.collections.get('ImageCollection').data.insert({
-        id: imageId, // Use the generated ID
         title: title,
         poster: imageBase64,
         thumbnailPath: `/thumbnails/${imageId}.jpg` // Store the path to the thumbnail
@@ -142,27 +141,26 @@ export async function load() {
         client = await connectToWeaviate();
       }
   
-      // Get collection if it exists
       let images: { id: string; title: string; thumbnailUrl: string }[] = [];
       try {
         const collection = client.collections.get('ImageCollection');
         
         // Just get the basic information and thumbnail path
-        for await (let item of collection.iterator()) {
-          if (item && item.properties) {
+        for await (const item of collection.iterator(
+			{
+				returnProperties: ['title', 'thumbnailPath']
+			}
+		)) {
+          if (item) {
             // Map thumbnailPath to thumbnailUrl for the client
             images.push({
               id: item.uuid,
-              title: item.properties.title as string,
-              thumbnailUrl: item.properties.thumbnailPath as string || ''
+              title: String(item.properties?.title || ''),
+              thumbnailUrl: String(item.properties?.thumbnailPath || '')
             });
             
             // Add debug log to see what's happening
-            console.log('Image data:', {
-              id: item.uuid,
-              title: item.properties.title,
-              thumbnailPath: item.properties.thumbnailPath
-            });
+            console.log(`Found ${images.length} images`)
           }
         }
         
