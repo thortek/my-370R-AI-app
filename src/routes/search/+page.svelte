@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { ActionData, PageData } from './$types'
+    import { testData } from './test-data'; 
 
     type ImageResult = {
         id: string;
@@ -37,5 +38,16 @@ console.log(props.form);
         Search
         </button>
         </form>
+    </div>
+
+    <div>
+        {#each testData.images as result, i}
+        <li class="flex items-center space-x-4">
+            <div>
+                <p>Title: {result.title}</p>
+                <img src={result.thumbnailUrl} alt={result.title} class="w-32 h-32" />
+            </div>
+        </li>
+        {/each}
     </div>
 </main>
