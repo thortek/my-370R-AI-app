@@ -1,6 +1,16 @@
 import type { Actions, RequestEvent } from '@sveltejs/kit'
 import { connectToWeaviate } from '$lib/weaviate';
 
+// Define the interface at the top of your file or in a separate types file
+interface SearchResultImage {
+    id: string;
+    title: string;
+    thumbnailUrl: string;
+    matchScore: number | null;
+    distance: number | undefined;
+    rank: number;
+}
+
 export const actions: Actions = {
     imageSearch: async ({ request }: RequestEvent) => {
         try {
@@ -28,11 +38,29 @@ export const actions: Actions = {
             returnMetadata: ["distance", "certainty"]
         })
 
+        let images: SearchResultImage[] = []
+
+        if (searchResults.objects) {
+            images = searchResults.objects.map((obj, index) => {
+                return {
+                    id: obj.uuid || '',
+                    title: String(obj.properties.title || ''),
+                    thumbnailUrl: String(obj.properties.thumbnailPath || ''),
+                    // calculate a percentage match score
+                    matchScore: obj.metadata?.certainty
+                    ? Math.round(obj.metadata.certainty * 100)
+                    : null,
+                    distance: obj.metadata?.distance,
+                    rank: index + 1
+                }
+            })
+        }
+
         console.log(`Search results for "${query}":`, searchResults)
 
         return {
             success: true,
-            data: searchResults
+            data: images
         }
 
         } catch (error) {
