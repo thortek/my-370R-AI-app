@@ -1,3 +1,23 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss";
+
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton/optional/presets';
+@import '@skeletonlabs/skeleton/themes/cerberus';
+
+@source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
+
+.contents-wrapper {
+    display: contents;
+}
+
+ol {
+    margin-left: 1rem;
+    list-style-position: inside;
+    list-style-type: decimal; 
+}
+
+ul {
+    margin-left: 1rem;
+    list-style-position: inside;
+    list-style-type: disc; 
+}

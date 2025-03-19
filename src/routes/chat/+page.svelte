@@ -154,7 +154,7 @@
 			<div class="space-y-4">
 				<div class="flex space-x-2">
 					<Avatar src="/img-tutor-girl.png" name="Tutor girl image" />
-					<div class="assistant-chat">Hello! How can I help you?</div>
+					<div class="rounded-lg bg-primary-100 p-2">Hello! How can I help you?</div>
 				</div>
 				<!-- Need to display each chat item here -->
 				{#each chatHistory as chat, i}
@@ -163,7 +163,7 @@
 							<div>
 								<Avatar src="/PikaThorAnime.png" name="User image" />
 							</div>
-							<div class="user-chat">
+							<div class="rounded-lg bg-surface-200 p-2">
 								{chat.content}
 							</div>
 						</div>
@@ -173,7 +173,7 @@
 							<div>
 								<Avatar src="/img-tutor-girl.png" name="Tutor girl image" />
 							</div>
-							<div class="assistant-chat">
+							<div class="rounded-lg bg-primary-100 p-2">
 								{@html chat.content}
 							</div>
 						</div>
@@ -185,7 +185,7 @@
 						<div class="flex">
 							<div class="flex space-x-2">
 								<Avatar name="tutor girl image" src={'/img-tutor-girl.png'} />
-								<div class="assistant-chat">
+								<div class="rounded-lg bg-primary-100 p-2">
 									{#if response.text === ''}
 										<TypingIndicator />
 									{:else}
@@ -239,50 +239,3 @@
 		</form>
 	</div>
 </main>
-
-<style lang="postcss">
-	.assistant-chat {
-		@apply rounded-lg bg-primary-100 p-2;
-	}
-
-	.user-chat {
-		@apply rounded-lg bg-surface-200 p-2;
-	}
-
-	.assistant-chat :global {
-		ol {
-			@apply ml-4 list-inside list-decimal;
-		}
-		ul {
-			@apply ml-4 list-inside list-disc;
-		}
-		/* Code blocks */
-		/* 	pre {
-			@apply my-4 overflow-x-auto rounded-lg bg-surface-700 p-4;
-		}
-		code {
-			@apply rounded bg-surface-100 px-1 py-0.5 font-mono;
-		}
- */
-		/* Headers */
-		h1 {
-			@apply mb-4 text-2xl font-bold;
-		}
-		h2 {
-			@apply mb-3 text-xl font-bold;
-		}
-		h3 {
-			@apply mb-2 text-lg font-bold;
-		}
-
-		/* Links */
-		a {
-			@apply text-primary-500 hover:underline;
-		}
-
-		/* Blockquotes */
-		blockquote {
-			@apply border-l-4 border-surface-500 pl-4 italic;
-		}
-	}
-</style>
