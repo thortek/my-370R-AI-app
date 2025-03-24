@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms'
 	import type { ActionData, PageData } from './$types'
+	import { invalidateAll } from '$app/navigation'
 
 	// Converting props to $props rune
 	const { data, form } = $props<{ data: PageData; form: ActionData }>()
@@ -61,7 +62,21 @@
 </svelte:head>
 
 <main class="container mx-auto max-w-4xl p-4">
-	<h1 class="mb-6 text-center text-3xl font-bold text-primary-700">AI Image Collection</h1>
+	<h1 class="text-primary-700 mb-6 text-center text-3xl font-bold">
+		{#if data.searchPerformed}
+			Search Results: "{data.searchQuery}"
+		{:else}
+			AI Image Collection
+		{/if}
+	</h1>
+
+	<div class="mb-4 text-center">
+		<a
+			href="/search"
+			class="bg-primary-100 text-primary-800 hover:bg-primary-200 inline-block rounded-md px-4 py-2 transition">
+			Search Images
+		</a>
+	</div>
 
 	<div class="mb-8 rounded-lg bg-white p-6 shadow-lg">
 		<h2 class="mb-4 text-xl font-semibold">Upload a New Image</h2>
@@ -77,6 +92,7 @@
 					await update()
 					if (form?.success) {
 						resetForm()
+						await invalidateAll() // Add this line to refresh the page data
 					}
 					loading = false
 				}
@@ -93,12 +109,12 @@
 					accept="image/*"
 					required
 					onchange={handleFileSelect}
-					class="block w-full text-sm text-gray-500
-                           file:mr-4 file:rounded-md file:border-0
-                           file:bg-primary-50 file:px-4
+					class="file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 block
+                           w-full text-sm text-gray-500
+                           file:mr-4 file:rounded-md
+                           file:border-0 file:px-4
                            file:py-2 file:text-sm
-                           file:font-semibold file:text-primary-700
-                           hover:file:bg-primary-100" />
+                           file:font-semibold" />
 			</div>
 
 			<div>
@@ -111,7 +127,7 @@
 					name="title"
 					placeholder="Enter a descriptive title"
 					required
-					class="w-full rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+					class="focus:ring-primary-500 w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:outline-none" />
 			</div>
 
 			{#if previewUrl}
@@ -129,7 +145,7 @@
 			<button
 				type="submit"
 				disabled={loading}
-				class="w-full rounded-md bg-primary-600 px-4 py-2 font-bold text-white transition duration-200 hover:bg-primary-700 disabled:bg-gray-400">
+				class="bg-primary-600 hover:bg-primary-700 w-full rounded-md px-4 py-2 font-bold text-white transition duration-200 disabled:bg-gray-400">
 				{loading ? 'Uploading...' : 'Upload Image'}
 			</button>
 
