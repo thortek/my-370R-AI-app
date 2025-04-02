@@ -3,6 +3,7 @@
     import { invalidateAll } from '$app/navigation';
     import { Avatar, Progress } from '@skeletonlabs/skeleton-svelte';
     import { Wand, RefreshCw, Save } from 'lucide-svelte';
+    import { goto } from '$app/navigation';
     
     // Track state
     let prompt = $state('');
@@ -115,8 +116,11 @@
     
     async function saveGeneratedImage() {
         if (!selectedImage) return;
+        // just goto the image collection
+        // image and thumbnail should be generated already
+        await goto('/images');
         
-        try {
+/*         try {
             const response = await fetch('/api/saveImage', {
                 method: 'POST',
                 headers: {
@@ -142,7 +146,7 @@
             }
         } catch (err) {
             error = err instanceof Error ? err.message : 'An unexpected error occurred';
-        }
+        } */
     }
 </script>
 

@@ -6,6 +6,8 @@ import crypto from 'crypto'
 import OpenAI from 'openai'
 import type { WeaviateClient } from 'weaviate-client'
 import { connectToWeaviate } from '$lib/weaviate'
+import sharp from 'sharp'
+import { writeFileSync, existsSync, mkdirSync } from 'fs'
 
 let client: WeaviateClient
 
@@ -27,7 +29,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		// Save the generated image to a static directory
 		const imageId = crypto.randomUUID()
-		const imagePath = `/static/${imageId}.png`
+		const imagePath = `${imageId}.png`
 		const fullPath = path.join(process.cwd(), 'static', imagePath)
 
 		// Ensure directory exists
@@ -35,6 +37,25 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		// Save the image buffer to disk
 		await fs.writeFile(fullPath, Buffer.from(imageData, 'base64'))
+
+		// 1. Create thumbnail
+				const thumbnailBuffer = await sharp(Buffer.from(imageData, 'base64'))
+					.resize(200, 200, { fit: 'cover' })
+					.jpeg({ quality: 80 })
+					.toBuffer()
+		
+				// 2. Save thumbnail to static folder
+				const thumbnailDir = ensureThumbnailDir()
+				const thumbnailFilename = `${imageId}.jpg`
+				const thumbnailPath = path.join(thumbnailDir, thumbnailFilename)
+		
+				writeFileSync(thumbnailPath, thumbnailBuffer)
+		
+				// 3. Convert original to base64 for Weaviate
+				const base64Image = bufferToBase64(Buffer.from(imageData, 'base64'))
+		
+				// 4. Store image data in Weaviate with the imageId
+				const success = await addImageToCollection(prompt, base64Image, imageId)
 
 		return json({
 			success: true,
@@ -77,7 +98,7 @@ async function generateImageWithOpenAI(prompt: string): Promise<string> {
 			throw new Error('Failed to generate image')
 		}
 
-		// Get the image URL from the response
+		// Get the image URL from the response that points to OpenAI's server for 60 minutes after generation
 		const imageUrl = response.data[0].url
 
 		if (!imageUrl) {
@@ -95,5 +116,46 @@ async function generateImageWithOpenAI(prompt: string): Promise<string> {
 		throw error
 	}
 }
+
+  // Add this function to ensure thumbnail directory exists
+function ensureThumbnailDir() {
+	const thumbnailDir = path.join(process.cwd(), 'static', 'thumbnails')
+	if (!existsSync(thumbnailDir)) {
+		mkdirSync(thumbnailDir, { recursive: true })
+	}
+	return thumbnailDir
+}
+
+/**
+ * Converts an image file to base64 string
+ * @param buffer Image file buffer
+ * @returns Base64 string
+ */
+function bufferToBase64(buffer: Buffer): string {
+	return buffer.toString('base64')
+}
+
+/**
+ * Add an image to the ImageCollection
+ * @param title Text title for the image
+ * @param imageBase64 Base64 encoded image data
+ * @param imageId Unique ID for the image
+ */
+async function addImageToCollection(title: string, imageBase64: string, imageId: string): Promise<boolean> {
+    try {
+		client = await connectToWeaviate()
+      await client.collections.get('ImageCollection').data.insert({
+        title: title,
+        poster: imageBase64,
+        thumbnailPath: `/thumbnails/${imageId}.jpg` // Store the path to the thumbnail
+      });
+  
+      console.log(`Successfully added image: ${title}`);
+      return true;
+    } catch (error) {
+      console.error(`Failed to add image to collection: ${error}`);
+      return false;
+    }
+  }
 
 
