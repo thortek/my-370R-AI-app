@@ -209,6 +209,8 @@ export async function load() {
       let images: { id: string; title: string; thumbnailUrl: string }[] = [];
       try {
         const collection = client.collections.get('ImageCollection');
+
+		console.log('Collection:', collection.data.exists);
         
         // Just get the basic information and thumbnail path
         for await (const item of collection.iterator(

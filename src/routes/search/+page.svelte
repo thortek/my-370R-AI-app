@@ -9,6 +9,7 @@
 		id: string
 		thumbnailUrl: string
 		title: string
+		[key: string]: any // Allow for additional properties
 	}
 
 	const props = $props<{ data: PageData; form: ActionData }>()
@@ -77,6 +78,9 @@
 					<p>Title: {result.title}</p>
 					<img src={result.thumbnailUrl} alt={result.title} class="h-32 w-32" />
 				</div>
+				<div>
+					<p>Distance: {result.distance}</p>
+					<p>Match Score: {result.matchScore}</p>
 			</li>
 		{/each}
 	</div>
