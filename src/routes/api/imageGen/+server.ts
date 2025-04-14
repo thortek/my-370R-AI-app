@@ -3,15 +3,20 @@ import type { RequestHandler } from './$types'
 import path from 'path'
 import fs from 'fs/promises'
 import crypto from 'crypto'
-import OpenAI from 'openai'
+//import OpenAI from 'openai'
 import type { WeaviateClient } from 'weaviate-client'
 import { connectToWeaviate } from '$lib/weaviate'
 import sharp from 'sharp'
 import { writeFileSync, existsSync, mkdirSync } from 'fs'
+import Replicate from 'replicate'
+import { REPLICATE_API_TOKEN } from '$env/static/private'
 
 let client: WeaviateClient
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+//const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const replicate = new Replicate({
+  auth: REPLICATE_API_TOKEN,
+})
 
 /**
  * Handles image generation requests using Gemma 3 via Ollama
@@ -25,7 +30,30 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Call OpenAI API to generate image with OpenAI
-		const imageData = await generateImageWithOpenAI(prompt)
+		//const imageData = await generateImageWithOpenAI(prompt)
+
+		// Call Replicate API to generate image with black forest labs flux-schnell
+		const imageData: any = await replicate.run('black-forest-labs/flux-schnell', {
+			input: {
+				prompt,
+				go_fast: true,
+				num_outputs: 1,
+				aspect_ratio: '1:1',
+				output_format: 'webp',
+				output_quality: 80,
+			}
+		})
+
+		console.log('Image data:', imageData)
+
+		if (!imageData || imageData.length === 0) {
+			throw new Error('Failed to generate image')
+		}
+
+		const imageResponse = await fetch(imageData[0].url())
+		const imageArrayBuffer = await imageResponse.arrayBuffer()
+		const base64ImageBuffer = Buffer.from(imageArrayBuffer).toString('base64')
+
 
 		// Save the generated image to a static directory
 		const imageId = crypto.randomUUID()
@@ -36,9 +64,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		await fs.mkdir(path.dirname(fullPath), { recursive: true })
 
 		// Save the image buffer to disk
-		await fs.writeFile(fullPath, Buffer.from(imageData, 'base64'))
+		await fs.writeFile(fullPath, Buffer.from(base64ImageBuffer, 'base64'))
 
-		// 1. Create thumbnail
+/* 		// 1. Create thumbnail
 				const thumbnailBuffer = await sharp(Buffer.from(imageData, 'base64'))
 					.resize(200, 200, { fit: 'cover' })
 					.jpeg({ quality: 80 })
@@ -55,7 +83,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				const base64Image = bufferToBase64(Buffer.from(imageData, 'base64'))
 		
 				// 4. Store image data in Weaviate with the imageId
-				const success = await addImageToCollection(prompt, base64Image, imageId)
+				const success = await addImageToCollection(prompt, base64Image, imageId) */
 
 		return json({
 			success: true,

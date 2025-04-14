@@ -10,7 +10,7 @@
     <h1 class="mb-6 text-center text-3xl font-bold text-primary-700">AI Image Generator</h1>
     
     <p class="mb-8 text-center text-lg text-gray-600">
-        Create stunning AI-generated images from text prompts using Gemma 3
+        Create stunning AI-generated images from text prompts using Flux-Schnell
     </p>
     
     <ImageGenerator />
