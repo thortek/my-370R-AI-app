@@ -120,7 +120,7 @@
         // image and thumbnail should be generated already
         await goto('/images');
         
-/*         try {
+         try {
             const response = await fetch('/api/saveImage', {
                 method: 'POST',
                 headers: {
@@ -146,7 +146,7 @@
             }
         } catch (err) {
             error = err instanceof Error ? err.message : 'An unexpected error occurred';
-        } */
+        }
     }
 </script>
 
