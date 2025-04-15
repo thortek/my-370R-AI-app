@@ -210,7 +210,7 @@ export async function load() {
       try {
         const collection = client.collections.get('ImageCollection');
 
-		console.log('Collection:', collection.data.exists);
+		//console.log('Collection:', collection.data.exists);
         
         // Just get the basic information and thumbnail path
         for await (const item of collection.iterator(
@@ -227,12 +227,12 @@ export async function load() {
             });
             
             // Add debug log to see what's happening
-            console.log(`Found ${images.length} images`)
+            //console.log(`Found ${images.length} images`)
           }
         }
         
         // Log the first few entries to see what's being returned
-        console.log('First 3 images:', images.slice(0, 3));
+        //console.log('First 3 images:', images.slice(0, 3));
       } catch (e) {
         console.error('Could not get images collection:', e);
       }

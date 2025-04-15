@@ -116,11 +116,8 @@
     
     async function saveGeneratedImage() {
         if (!selectedImage) return;
-        // just goto the image collection
-        // image and thumbnail should be generated already
-        await goto('/images');
         
-         try {
+        try {
             const response = await fetch('/api/saveImage', {
                 method: 'POST',
                 headers: {
@@ -139,8 +136,8 @@
             const result = await response.json();
             
             if (result.success) {
-                // Show success message or redirect
-                await invalidateAll();
+                // Navigate AFTER successful save
+                await goto('/images');
             } else {
                 error = result.message || 'Failed to save image';
             }
